@@ -7,7 +7,12 @@ from mk2.plugins import Plugin
 from mk2 import events
 
 import zmq
-from txzmq import ZmqEndpoint, ZmqFactory, ZmqPubConnection, ZmqSubConnection
+#from txzmq import ZmqEndpoint, ZmqFactory, ZmqPubConnection, ZmqSubConnection ZmqEndpointType
+#from txzmq.connection import ZmqEndpointType
+
+from txzmq.connection import ZmqEndpoint, ZmqEndpointType
+from txzmq.factory import ZmqFactory
+from txzmq.pubsub import ZmqPubConnection
 
 
 class ZeromqProtocol(protocol.Protocol):
@@ -46,13 +51,12 @@ class ZeromqFactory(protocol.ReconnectingClientFactory):
 class Zeromq(Plugin):
     host = Plugin.Property(default="127.0.0.1")
     port = Plugin.Property(default=5000)
-    endpoint = "tcp://%s:%i" % (host, port)
     channel = Plugin.Property(default="mark2-{server}")
     relay_events = Plugin.Property(default="StatPlayers,PlayerJoin,PlayerQuit,PlayerChat,PlayerDeath")
-
     def setup(self):
-        self.factory = ZeromqFactory()
-        e = ZmqEndpoint("connect", self.endpoint)
+        self.endpoint = "tcp://%s:%s" % (self.host, self.port)
+        self.factory = ZmqFactory()
+        e = ZmqEndpoint(ZmqEndpointType.connect, self.endpoint)
         self.connection = ZmqPubConnection(self.factory, e)
 
         for ev in self.relay_events.split(','):
